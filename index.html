@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>B o V - Batalla de Ortografía</title>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <style>
+        :root {
+            --fondo: #F0FDF4;
+            --primario: #0D9488;
+            --primario-claro: #CCFBF1;
+            --secundario: #059669;
+            --acento: #F59E0B;
+            --error: #DC2626;
+            --texto: #1E293B;
+            --texto-claro: #64748B;
+            --card: #FFFFFF;
+            /* Colores de jugadores */
+            --p1: #3B82F6;
+            --p2: #EF4444;
+            --p3: #10B981;
+            --p4: #F59E0B;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Nunito', sans-serif; background: var(--fondo); min-height: 100vh; overflow-x: hidden; }
+
+        .contenedor { max-width: 800px; margin: 0 auto; padding: 24px 16px; display: flex; flex-direction: column; align-items: center; }
+
+        .titulo { font-family: 'Fredoka One', cursive; font-size: 2.5rem; text-align: center; margin-bottom: 20px; color: var(--primario); }
+
+        /* Panel de Jugadores */
+        .panel-jugadores {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 15px;
+            width: 100%;
+            margin-bottom: 30px;
+        }
+
+        .jugador-card {
+            background: white;
+            padding: 15px;
+            border-radius: 18px;
+            text-align: center;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            border: 4px solid transparent;
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            opacity: 0.6;
+        }
+
+        .jugador-card.turno-activo {
+            border-color: var(--primario);
+            transform: scale(1.05);
+            box-shadow: 0 10px 20px rgba(13, 148, 136, 0.2);
+            opacity: 1;
+        }
+
+        .jugador-nombre { font-family: 'Fredoka One', cursive; font-size: 1rem; margin-bottom: 5px; }
+        .jugador-puntos { font-weight: 900; font-size: 1.5rem; color: var(--texto); }
+
+        .mini-barra { width: 100%; height: 10px; background: #E2E8F0; border-radius: 5px; margin-top: 10px; overflow: hidden; }
+        .mini-fill { height: 100%; width: 0%; transition: width 0.5s ease; }
+
+        /* Colores específicos */
+        .p1 .mini-fill { background: var(--p1); } .p1 .jugador-nombre { color: var(--p1); }
+        .p2 .mini-fill { background: var(--p2); } .p2 .jugador-nombre { color: var(--p2); }
+        .p3 .mini-fill { background: var(--p3); } .p3 .jugador-nombre { color: var(--p3); }
+        .p4 .mini-fill { background: var(--p4); } .p4 .jugador-nombre { color: var(--p4); }
+
+        /* Área de Juego */
+        .turno-anuncio { font-family: 'Fredoka One', cursive; font-size: 1.4rem; margin-bottom: 15px; }
+        
+        .tarjeta {
+            width: 100%;
+            max-width: 500px;
+            background: var(--card);
+            border-radius: 24px;
+            padding: 35px 25px;
+            box-shadow: 0 12px 40px rgba(0,0,0,0.08);
+            text-align: center;
+        }
+
+        .tiles-contenedor { display: flex; justify-content: center; gap: 8px; margin-bottom: 30px; flex-wrap: wrap; }
+        .tile {
+            width: 45px; height: 55px; border-radius: 10px; display: flex; align-items: center; justify-content: center;
+            font-family: 'Fredoka One', cursive; font-size: 1.6rem; border: 2px solid #E2E8F0; background: #F8FAFC;
+        }
+        .tile-misterio { background: var(--primario); color: white; border: none; animation: pulso 1.5s infinite; }
+
+        @keyframes pulso { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.05); } }
+
+        .opciones { display: flex; gap: 15px; }
+        .opcion {
+            flex: 1; padding: 20px 10px; font-family: 'Fredoka One', cursive; font-size: 1.3rem;
+            border-radius: 16px; border: 3px solid #E2E8F0; cursor: pointer; background: white; transition: 0.2s;
+        }
+        .opcion:hover:not(.desactivada) { border-color: var(--primario); background: var(--primario-claro); transform: translateY(-3px); }
+        .correcta { background: var(--secundario) !important; color: white; border-color: var(--secundario) !important; }
+        .incorrecta { background: var(--error) !important; color: white; border-color: var(--error) !important; }
+        .desactivada { cursor: default; }
+
+        /* Overlays */
+        .overlay { position: fixed; inset: 0; background: rgba(240, 253, 244, 0.95); z-index: 100; display: flex; align-items: center; justify-content: center; text-align: center; padding: 20px; }
+        .ocultar { display: none; }
+        
+        .btn-grande {
+            padding: 18px 40px; font-family: 'Fredoka One', cursive; font-size: 1.5rem;
+            border-radius: 18px; border: none; cursor: pointer; background: var(--primario); color: white;
+            box-shadow: 0 6px 20px rgba(13, 148, 136, 0.3); transition: 0.2s;
+        }
+        .btn-grande:hover { transform: scale(1.05); background: var(--secundario); }
+
+        .selector { display: flex; gap: 15px; justify-content: center; margin-top: 25px; }
+        .btn-num { width: 60px; height: 60px; border-radius: 15px; border: none; font-family: 'Fredoka One'; font-size: 1.5rem; cursor: pointer; background: white; color: var(--primario); box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        .btn-num:hover { background: var(--primario); color: white; }
+    </style>
+</head>
+<body>
+
+    <div id="pantallaInicio" class="overlay">
+        <div>
+            <h1 style="font-family:'Fredoka One'; font-size: 4rem; color: var(--primario); margin-bottom: 10px;">B o V</h1>
+            <p style="font-weight: 700; color: var(--texto-claro); font-size: 1.2rem;">¿Cuántos jugadores van a participar?</p>
+            <div class="selector">
+                <button class="btn-num" onclick="iniciarJuego(1)">1</button>
+                <button class="btn-num" onclick="iniciarJuego(2)">2</button>
+                <button class="btn-num" onclick="iniciarJuego(3)">3</button>
+                <button class="btn-num" onclick="iniciarJuego(4)">4</button>
+            </div>
+        </div>
+    </div>
+
+    <main class="contenedor">
+        <h1 class="titulo">B o V</h1>
+        <div id="panelJugadores" class="panel-jugadores"></div>
+
+        <div class="turno-anuncio" id="turnoAnuncio">
+            Turno de: <span id="nombreTurno">Jugador 1</span>
+        </div>
+
+        <div class="tarjeta">
+            <div class="tiles-contenedor" id="tiles"></div>
+            <div class="opciones">
+                <button class="opcion" id="btnOpt1" onclick="verificarRespuesta(0)"></button>
+                <button class="opcion" id="btnOpt2" onclick="verificarRespuesta(1)"></button>
+            </div>
+        </div>
+    </main>
+
+    <div id="pantallaVictoria" class="overlay ocultar">
+        <div>
+            <i class="fas fa-trophy" style="font-size: 5rem; color: var(--acento)"></i>
+            <h2 id="ganadorTexto" style="font-family:'Fredoka One'; font-size: 2.5rem; margin: 20px 0;"></h2>
+            <button class="btn-grande" onclick="location.reload()">Reiniciar Batalla</button>
+        </div>
+    </div>
+
+    <script>
+        const palabras = [
+            "barco", "bravo", "burbuja", "busqueda", "biblioteca", "botas", "batalla", "broma", "blanco", "bloque",
+            "brillo", "bosque", "banco", "bueno", "burbuja", "bisabuelo", "balon", "billete", "baston", "basura",
+            "botella", "bufanda", "burro", "buzon", "batir", "beber", "bailar", "barrer", "buscar", "bajar",
+            "bandera", "baño", "barrio", "boda", "bolso", "bomba", "bondad", "borde", "boton", "brisa",
+            "vaso", "vela", "verde", "verdad", "verano", "viejo", "vida", "volar", "volver", "voz",
+            "vaca", "viento", "ventana", "viaje", "vender", "venir", "visita", "valor", "vapor", "vasija",
+            "vecino", "veinte", "veloz", "vencer", "veneno", "vengar", "ventaja", "vereda", "verso", "vestido",
+            "vibrar", "vicio", "victoria", "vidrio", "vigilar", "villa", "vinagre", "violin", "virtud", "visera",
+            "vivienda", "obvio", "valla", "bienvenido", "benevolo", "bebida", "vivir", "bobina", "breve", "avion",
+            "barba", "bota", "voto", "bobo", "vago", "bache", "vaina", "bulto", "vuelo", "abuelo"
+        ];
+
+        let totalJugadores = 1;
+        let turnoActual = 0;
+        let jugadores = [];
+        let palabraCorrecta = "";
+        let respondiendo = false;
+        const PUNTOS_VICTORIA = 10;
+
+        function iniciarJuego(num) {
+            totalJugadores = num;
+            document.getElementById('pantallaInicio').classList.add('ocultar');
+            const panel = document.getElementById('panelJugadores');
+            panel.innerHTML = "";
+            
+            for(let i=0; i<num; i++) {
+                jugadores.push({ puntos: 0 });
+                panel.innerHTML += `
+                    <div id="card-j${i}" class="jugador-card p${i+1}">
+                        <div class="jugador-nombre">Jugador ${i+1}</div>
+                        <div id="puntos-j${i}" class="jugador-puntos">0</div>
+                        <div class="mini-barra"><div id="barra-j${i}" class="mini-fill"></div></div>
+                    </div>
+                `;
+            }
+            actualizarTurnoUI();
+            nuevaPregunta();
+        }
+
+        function nuevaPregunta() {
+            respondiendo = false;
+            palabraCorrecta = palabras[Math.floor(Math.random() * palabras.length)];
+            
+            // Lógica de mapeo seguro para evitar el error "_temp"
+            let palabraIncorrecta = [...palabraCorrecta].map(l => {
+                if (l === 'b') return 'v';
+                if (l === 'v') return 'b';
+                if (l === 'B') return 'V';
+                if (l === 'V') return 'B';
+                return l;
+            }).join('');
+
+            // Dibujar letras
+            const tiles = document.getElementById('tiles');
+            tiles.innerHTML = "";
+            [...palabraCorrecta].forEach(letra => {
+                const l = letra.toLowerCase();
+                if(l === 'b' || l === 'v') {
+                    tiles.innerHTML += `<div class="tile tile-misterio">?</div>`;
+                } else {
+                    tiles.innerHTML += `<div class="tile">${letra}</div>`;
+                }
+            });
+
+            // Botones
+            const b1 = document.getElementById('btnOpt1');
+            const b2 = document.getElementById('btnOpt2');
+            b1.className = "opcion"; b2.className = "opcion";
+
+            if(Math.random() > 0.5) {
+                b1.textContent = palabraCorrecta; b1.dataset.val = "c";
+                b2.textContent = palabraIncorrecta; b2.dataset.val = "i";
+            } else {
+                b1.textContent = palabraIncorrecta; b1.dataset.val = "i";
+                b2.textContent = palabraCorrecta; b2.dataset.val = "c";
+            }
+        }
+
+        function verificarRespuesta(idx) {
+            if(respondiendo) return;
+            respondiendo = true;
+
+            const btn = idx === 0 ? document.getElementById('btnOpt1') : document.getElementById('btnOpt2');
+            const esCorrecto = btn.dataset.val === "c";
+            const btnCorrecto = document.getElementById('btnOpt1').dataset.val === "c" ? document.getElementById('btnOpt1') : document.getElementById('btnOpt2');
+
+            if(esCorrecto) {
+                btn.classList.add('correcta');
+                jugadores[turnoActual].puntos++;
+                actualizarPuntosUI();
+                
+                if(jugadores[turnoActual].puntos >= PUNTOS_VICTORIA) {
+                    setTimeout(finalizarJuego, 500);
+                    return;
+                }
+            } else {
+                btn.classList.add('incorrecta');
+                btnCorrecto.classList.add('correcta');
+            }
+
+            // Bloquear botones
+            document.getElementById('btnOpt1').classList.add('desactivada');
+            document.getElementById('btnOpt2').classList.add('desactivada');
+
+            setTimeout(() => {
+                turnoActual = (turnoActual + 1) % totalJugadores;
+                actualizarTurnoUI();
+                nuevaPregunta();
+            }, 1500);
+        }
+
+        function actualizarPuntosUI() {
+            document.getElementById(`puntos-j${turnoActual}`).textContent = jugadores[turnoActual].puntos;
+            document.getElementById(`barra-j${turnoActual}`).style.width = (jugadores[turnoActual].puntos / PUNTOS_VICTORIA * 100) + "%";
+        }
+
+        function actualizarTurnoUI() {
+            jugadores.forEach((_, i) => {
+                document.getElementById(`card-j${i}`).classList.remove('turno-activo');
+            });
+            document.getElementById(`card-j${turnoActual}`).classList.add('turno-activo');
+            const nt = document.getElementById('nombreTurno');
+            nt.textContent = `Jugador ${turnoActual + 1}`;
+            nt.style.color = `var(--p${turnoActual + 1})`;
+        }
+
+        function finalizarJuego() {
+            document.getElementById('pantallaVictoria').classList.remove('ocultar');
+            const gt = document.getElementById('ganadorTexto');
+            gt.textContent = `¡El Jugador ${turnoActual + 1} es el maestro!`;
+            gt.style.color = `var(--p${turnoActual + 1})`;
+        }
+    </script>
+</body>
+</html>
